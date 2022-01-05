@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="canonical" href="https://devzone2.netset.com/add-secondarey-dns-server/">
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Add-secondary-dns-server - Netset-Docs</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Add-secondary-dns-server";
+    var mkdocs_page_input_path = "add-secondarey-dns-server.md";
+    var mkdocs_page_url = "/add-secondarey-dns-server/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/rust.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Netset-Docs</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Add-secondary-dns-server</a>
+    <ul class="current">
+    </ul>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../Confluence/">Confluence Setup</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Netset-Docs</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Add-secondary-dns-server</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="on-the-primary-server-side">On the primary server side:</h2>
+<p>1- added new key in named.conf.keys</p>
+<p># nano -w named.conf.keys</p>
+<pre><code> key dns2 {
+    algorithm hmac-sha1;
+    secret "+hItdqx5Q+jvuKVrrBEdp+kotR8=";
+ };
+
+ server 85.118.202.8 {
+    keys { dns2 ;};
+ };
+</code></pre>
+<p>1.1- restart service to activate the change</p>
+<p># sudo jexec  nameserver rndc reconfig</p>
+<p>2- added new line in acl recurseallow
+   added new line in allow-transfer</p>
+<p># nano -w named.conf.options</p>
+<pre><code> 85.118.202.8;
+</code></pre>
+<p>2.1- activate the changes:
+# sudo jexec  nameserver rndc reconfig</p>
+<p>check the status: 
+# less /srv/jails/nameserver/var/log/messages</p>
+<h2 id="on-the-secondary-server-side">On the secondary server side:</h2>
+<p>1- Create key:</p>
+<p># tsig-keygen -a hmac-sha1 dns2 &gt; dns2.key</p>
+<p>2- use the key in the configuration:
+# nano -w /etc/named.conf.d/keys.conf</p>
+<pre><code> key "dns2" {
+    algorithm hmac-sha1;
+    secret "+hItdqx5Q+jvuKVrrBEdp+kotR8=";
+ };
+
+ server 194.16.65.242 {
+    keys { dns2; };
+ };
+</code></pre>
+<p>3- Create Zones configuration:</p>
+<p># nano -w /etc/named.conf.d/zones.conf</p>
+<pre><code> zone "netset.se" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.netset.se";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+ };
+
+
+ zone "netset.us" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.netset.us";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+ };
+
+ zone "netset.nu" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.netset.nu";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+ };
+
+ zone "netset.eu" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.netset.eu";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+ };
+
+ zone "netset.asia" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.netset.asia";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+ };
+
+ zone "tradepoint.se" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.tradepoint.se";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+ };
+
+ zone "240-28.65.16.194.in-addr.arpa" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.194.16.65";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+ };
+
+ zone "cries.se" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.cries.se";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+ };
+
+ zone "nettailer.co.uk" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.nettailer.co.uk";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+ };
+
+ zone "nettailer.com" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.nettailer.com";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+ };
+
+zone "nettailer.se" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.nettailer.se";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+};
+
+zone "netailer.se" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.netailer.se";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+};
+
+zone "my-secure-shop.eu" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.my-secure-shop.eu";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+};
+
+zone "nettailer.dk" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.nettailer.dk";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+};
+
+zone "netailer.dk" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.netailer.dk";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+
+};
+
+zone "nettailer.no" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.nettailer.no";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+};
+
+zone "netailer.eu" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.netailer.eu";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+};
+
+zone "netset.io" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.netset.io";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+};
+
+zone "netshore.com" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.netshore.com";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+};
+
+zone "netset.co.uk" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.netset.co.uk";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+};
+
+zone "netset.com" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.netset.com";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+};
+
+zone "netsetdemo.com" {
+    type slave;
+    file "/etc/named.conf.d/zones/db.netsetdemo.com";
+    masters { 194.16.65.242; };
+    allow-transfer {  key dns2; };
+};
+</code></pre>
+<p>4- Check the default settings:</p>
+<p># less /etc/named.conf</p>
+<p>5- check settings is ok <br/>
+# named-checkconf <br/>
+# named-checkzone  unixmen.local  /var/named/forward.unixmen <br/>
+# named-checkconf /etc/named.conf <br/></p>
+<p>6- Port</p>
+<p># firewall-cmd --permanent --add-port=53/udp <br/>
+# firewall-cmd --permanent --add-port=53/tcp <br/>
+# firewall-cmd --reload <br/>
++# firewall-cmd --list-all <br/></p>
+<h4 id="note1-cygrids-dns-servers">Note1: Cygrids DNS servers:</h4>
+<p>@dns01.cygrids.net <br/>
+@dns02.cygrids.net <br/>
+85.118.200.201 </p>
+<h4 id="troublshooting">Troublshooting:</h4>
+<p>1- reverse dns finns hos IP ägaren
+#dig -x IP_ADDRESS</p>
+<p>2-Network unreachable on IPv6:</p>
+<p>add OPTIONS="-4"</p>
+<p>to nano -w /etc/sysconfig/named</p>
+<h4 id="note2-you-should-add-nameserver-ns4netsetse-hos-doman-registraren">Note2: You should add Nameserver: ns4.netset.se hos domän registraren.</h4>
+<p>netset.com hos godaddy <br/>
+netset.se hos Loopia <br/></p>
+<h1 id="-">--------------------------------------------------------</h1>
+<h1 id="dnssec">DNSSEC:</h1>
+<p># sudo dnssec-keygen -a RSASHA256 -b 2048 -n ZONE   netsetdemo.com</p>
+<p># sudo dnssec-keygen -f KSK -a RSASHA256 -b 4096 -n ZONE netsetdemo.com</p>
+<p># dnssec-signzone -3 f55345c0803300b4 -A -N INCREMENT -o  netsetdemo.com -t netsetdemo.com.hosts</p>
+<pre><code> KSK=257  ZSK=256     RSASHA256= algorithm 8
+ flags aa=authoritative name server   ra= recursive name server  ad= the DNSSEC is enabled and used
+</code></pre>
+<p># dig DNSKEY netsetdemo.com. +multiline <br/>
+# dig +trace +noadditional DS netsetdemo.com. @8.8.8.8 | grep DS <br/>
+# dig @8.8.8.8 netsetdemo.com. DS <br/>
+# dig @ns.netset.se netset119.netset.com A +cd <br/></p>
+<pre><code>#!/bin/sh
+PDIR=`pwd`
+ZONEDIR="/srv/jails/nameserver/usr/local/etc/namedb" #location of your zone files
+ZONE=$1
+ZONEFILE=$2
+DNSSERVICE="named" #On CentOS/Fedora replace this with "named"
+cd $ZONEDIR
+SERIAL=`sudo jexec  nameserver rndc zonestatus netsetdemo.com | grep signed |egrep -ho '[0-9]{10}'`
+sed -i 's/'$SERIAL'/'$(($SERIAL+1))'/' $ZONEFILE
+sudo dnssec-signzone -A -3 f55345c0803300b4  -N increment -o $1 -t $2
+cd $PDIR
+</code></pre>
+<p># sudo jexec  nameserver rndc reconfig</p>
+<p># Add the keys to working directory named/working/</p>
+<p>Test 1: lyckades</p>
+<p>cd /srv/jails/nameserver/usr/local/etc/namedb
+sudo jexec  nameserver rndc freeze netsetdemo.com
+sudo nano -w  netsetdemo.com.hosts</p>
+<p>% the keyś are in separate folder
+sudo dnssec-signzone -g -d keys/netsetdemo_256.keys -3 $(head -c 1000 /dev/random | sha256 | cut -b 1-16) -A -o  netsetdemo.com -t netsetdemo.com.hosts keys/netsetdemo_256.keys/Knetsetdemo.com.+008+02763.private keys/netsetdemo_256.keys/Knetsetdemo.com.+008+59581.private</p>
+<p>% If the keys are in the same folder as zonefile and the SOA serial is incremntal (not recommended)
+sudo dnssec-signzone -3 $(head -c 1000 /dev/random | sha256 | cut -b 1-16) -A -N INCREMENT -o  netsetdemo.com -t netsetdemo.com.hosts</p>
+<p>sudo jexec  nameserver rndc reload netsetdemo.com
+sudo jexec  nameserver rndc thaw netsetdemo.com</p>
+<p>sudo jexec  nameserver rndc zonestatus netsetdemo.com
+less /srv/jails/nameserver/var/log/messages
+sudo jexec  nameserver rndc status
+sudo jexec  nameserver rndc  signing -list netsetdemo.com</p>
+<p>====================================================</p>
+<h3 id="zone-netsetcouk">ZONE: netset.co.uk</h3>
+<p># cd /srv/jails/nameserver/usr/local/etc/namedb <br/>
+# sudo jexec  nameserver rndc freeze netset.co.uk <br/>
+# sudo nano -w  netset.co.uk.hosts <br/></p>
+<p># sudo dnssec-signzone -d keys/netset.co.uk.keys -3 $(head -c 1000 /dev/random | sha256 | cut -b 1-16) -A -o netset.co.uk -t netset.co.uk.hosts keys/netset.co.uk.keys/Knetset.co.uk.+008+32134.private keys/netset.co.uk.keys/Knetset.co.uk.+008+42756.private
+<br/>
+# sudo jexec  nameserver rndc reload netset.co.uk <br/>
+# sudo jexec  nameserver rndc thaw netset.co.uk <br/></p>
+<p># sudo jexec  nameserver rndc zonestatus netset.co.uk <br/>
+# less /srv/jails/nameserver/var/log/messages <br/>
+# sudo jexec  nameserver rndc status<br/>
+====================================================</p>
+<p>Zone: nettailer.com</p>
+<p>sudo dnssec-keygen -a RSASHA256 -b 2048 -n ZONE nettailer.com
+sudo dnssec-keygen -f KSK -a RSASHA256 -b 4096 -n ZONE nettailer.com</p>
+<p>sudo jexec  nameserver rndc freeze nettailer.com
+sudo nano -w nettailer.com.hosts</p>
+<p>sudo dnssec-signzone -d keys/nettailer.com.keys -3 $(head -c 1000 /dev/random | sha256 | cut -b 1-16) -A -o nettailer.com -t nettailer.com.hosts keys/nettailer.com.keys/Knettailer.com.+008+65085.private keys/nettailer.com.keys/Knettailer.com.+008+61729.private</p>
+<p>sudo jexec  nameserver rndc reload nettailer.com
+sudo jexec  nameserver rndc thaw nettailer.com</p>
+<p>sudo jexec  nameserver rndc zonestatus nettailer.com
+sudo jexec  nameserver rndc status
+====================================================</p>
+<p>Zone: netset.io
+Edit zone
+then </p>
+<p>sudo dnssec-signzone -d keys/netset.io.keys -3 $(head -c 1000 /dev/random | sha256 | cut -b 1-16) -A -o  netset.io -t netset.io.hosts keys/netset.io.keys/Knetset.io.+008+16549.private keys/netset.io.keys/Knetset.io.+008+44718.private</p>
+<p>Then</p>
+<p>sudo jexec  nameserver rndc reload </p>
+<p>sudo jexec  nameserver rndc zonestatus netset.io
+less /srv/jails/nameserver/var/log/messages
+sudo jexec  nameserver rndc status</p>
+<p>====================================================</p>
+<p>Zone: netset.com
+5 8 * * Mon  /usr/home/nsadmin/sign-netset.com-zone</p>
+<p>cd /srv/jails/nameserver/usr/local/etc/namedb
+sudo jexec  nameserver rndc freeze netset.com
+sudo nano -w  netset.com.hosts</p>
+<p>sudo dnssec-signzone -d keys/netset.com.keys -3 $(head -c 1000 /dev/random | sha256 | cut -b 1-16) -A -o  netset.com -t netset.com.hosts keys/netset.com.keys/Knetset.com.+008+36214.private keys/netset.com.keys/Knetset.com.+008+64908.private</p>
+<p>sudo jexec  nameserver rndc reload netset.com
+sudo jexec  nameserver rndc thaw netset.com</p>
+<p>sudo jexec  nameserver rndc zonestatus netset.com
+less /srv/jails/nameserver/var/log/messages
+sudo jexec  nameserver rndc status</p>
+<p>====================================================
+Zone: nettailer.co.uk</p>
+<p>cd /srv/jails/nameserver/usr/local/etc/namedb</p>
+<p>sudo nano -w nettailer.co.uk.hosts</p>
+<p>sudo dnssec-signzone -d keys/nettailer.co.uk.keys -3 $(head -c 1000 /dev/random | sha256 | cut -b 1-16) -A -o nettailer.co.uk -t nettailer.co.uk.hosts  keys/nettailer.co.uk.keys/Knettailer.co.uk.+008+23700.private keys/nettailer.co.uk.keys/Knettailer.co.uk.+008+45094.private</p>
+<p>sudo jexec  nameserver rndc reload</p>
+<p>less /srv/jails/nameserver/var/log/messages
+sudo jexec  nameserver rndc zonestatus nettailer.co.uk</p>
+<p>====================================================</p>
+<p>Zone: netset.se</p>
+<p>cd /srv/jails/nameserver/usr/local/etc/namedb
+sudo jexec  nameserver rndc freeze netset.se
+sudo nano -w  netset.se.hosts</p>
+<p>sudo dnssec-signzone -d keys/netset.se.keys -3 $(head -c 1000 /dev/random | sha256 | cut -b 1-16) -A -o  netset.se -t netset.se.hosts keys/netset.se.keys/Knetset.se.+008+60556.private keys/netset.se.keys/Knetset.se.+008+04146.private </p>
+<p>sudo jexec  nameserver rndc reload  netset.se
+sudo jexec  nameserver rndc thaw  netset.se</p>
+<p>less /srv/jails/nameserver/var/log/messages</p>
+<h1 id="sudo-jexec-nameserver-rndc-zonestatus-netsetse">sudo jexec  nameserver rndc zonestatus netset.se</h1>
+<p>Zone: nettailer.se</p>
+<p>cd /srv/jails/nameserver/usr/local/etc/namedb
+sudo jexec  nameserver rndc freeze nettailer.se
+sudo nano -w  nettailer.se.hosts</p>
+<p>sudo dnssec-signzone -d keys/nettailer.se.keys -3 $(head -c 1000 /dev/random | sha256 | cut -b 1-16) -A -o  nettailer.se -t nettailer.se.hosts keys/nettailer.se.keys/Knettailer.se.+008+02454.private keys/nettailer.se.keys/Knettailer.se.+008+25465.private</p>
+<p>sudo jexec  nameserver rndc reload nettailer.se
+sudo jexec  nameserver rndc thaw nettailer.se</p>
+<p>less /srv/jails/nameserver/var/log/messages</p>
+<p>sudo jexec  nameserver rndc zonestatus nettailer.se</p>
+<p>=======================================================</p>
+<p>Zone:nettailer.dk</p>
+<p>sudo dnssec-signzone -d keys/nettailer.dk.keys -3 $(head -c 1000 /dev/random | sha256 | cut -b 1-16) -A -o nettailer.dk -t nettailer.dk.hosts  keys/nettailer.dk.keys/Knettailer.dk.+008+46938.private keys/nettailer.dk.keys/Knettailer.dk.+008+22066.private</p>
+<p>=======================================================</p>
+<p>Zone: netset.eu</p>
+<p>sudo jexec  nameserver rndc freeze netset.eu
+sudo nano -w  netset.eu.hosts</p>
+<p>sudo dnssec-signzone -d keys/netset.eu.keys -3 $(head -c 1000 /dev/random | sha256 | cut -b 1-16) -A -o netset.eu -t netset.eu.hosts  keys/netset.eu.keys/Knetset.eu.+008+54198.private keys/netset.eu.keys/Knetset.eu.+008+37339.private</p>
+<p>sudo jexec  nameserver rndc reload netset.eu
+ sudo jexec  nameserver rndc thaw netset.eu</p>
+<p>less /srv/jails/nameserver/var/log/messages
+ sudo jexec  nameserver rndc zonestatus netset.eu
+ ========================================================</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../Confluence/" class="btn btn-neutral float-right" title="Confluence Setup">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+      <span><a href="../Confluence/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

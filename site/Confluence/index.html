@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="canonical" href="https://devzone2.netset.com/Confluence/">
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Confluence Setup - Netset-Docs</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Confluence Setup";
+    var mkdocs_page_input_path = "Confluence.md";
+    var mkdocs_page_url = "/Confluence/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/rust.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Netset-Docs</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../add-secondarey-dns-server/">Add-secondary-dns-server</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Confluence Setup</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#db">DB:</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#download">Download:</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#show-in-database">SHOW in DATABASE:</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#modify-database">Modify DATABASE:</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#modify-database-in-conf-file">Modify database in conf file:</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#app">App:</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#_1"></a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_2"></a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Netset-Docs</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Confluence Setup</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="confluence-setup">Confluence setup:</h1>
+<h2 id="db">DB:</h2>
+<h4 id="download">Download:</h4>
+<ul>
+<li>download mysql80-community-release</li>
+</ul>
+<p># sudo rpm -ivh mysql80-community-release-el7-3.noarch.rpm<br />
+# sudo rpm -pql mysql80-community-release-el7-3.noarch.rpm<br />
+# sudo md5sum mysql80-community-release-el7-3.noarch.rpm<br />
+# sudo grep 'temporary password' /var/log/mysqld.log<br />
+# sudo mysql_secure_installation</p>
+<ul>
+<li>Connect to the database:<br />
+# mysql  -h 127.0.0.1   -P 3308 -u netset -pword -e "SHOW VARIABLES LIKE '%max_connections%';"<br />
+# mysql -u root</li>
+</ul>
+<p>Note1: I use JNDI datasource connection </p>
+<h5 id="show-in-database">SHOW in DATABASE:</h5>
+<p>> SHOW VARIABLES LIKE 'innodb_log_file_size';<br />
+> SHOW VARIABLES LIKE 'max_allowed_packet';<br />
+> SHOW VARIABLES LIKE '%max_connections%';<br />
+> SHOW VARIABLES LIKE '%innodb_strict_mode%'; for Zabbix server<br />
+> SHOW VARIABLES LIKE '%validate_password%';<br />
+> show global variables like 'local_infile';<br />
+> SELECT DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE schema_name = 'confluence';<br />
+> SELECT title, lastmoddate FROM CONTENT group by lastmoddate;<br />
+> SELECT User, Host, plugin, authentication_string FROM mysql.user;  </p>
+<p>SHOW PRIVILIGES:</p>
+<p>> show grants for 'netset'@'localhost';<br />
+> SET GLOBAL local_infile=1;</p>
+<p>SHOW tatal nember of tables:</p>
+<p>>SELECT count(*) AS TOTALNUMBEROFTABLES FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'confluence';</p>
+<h5 id="modify-database">Modify DATABASE:</h5>
+<p>> CREATE DATABASE confluence character set utf8 collate utf8_bin; <br/>
+> ALTER DATABASE confluence CHARACTER SET utf8 COLLATE utf8_bin; <br/>
+> CREATE USER 'netset'@'localhost' IDENTIFIED BY 'word'; <br/>
+> GRANT ALL ON confluence.* TO 'netset'@'localhost';<br />
+> FLUSH PRIVILEGES;</p>
+<p>> UPDATE user SET plugin='mysql_native_password' WHERE User='netset';<br />
+> ALTER USER 'root'@'localhost' IDENTIFIED BY '';<br />
+OR<br />
+> UPDATE mysql.user SET authentication_string = PASSWORD('') WHERE User = 'netset' AND Host = 'localhost';<br />
+OR<br />
+> SET PASSWORD FOR 'netset'@'localhost' = PASSWORD('');</p>
+<p>> SET GLOBAL mysqlx_max_connections = 300;<br />
+> SET GLOBAL max_connections = 300;<br />
+> SET GLOBAL max_connections = 500;<br />
+> SET GLOBAL innodb_log_file_size=2000000;<br />
+> SET GLOBAL max_allowed_packet=1073741824;<br />
+> SET GLOBAL sql_mode='STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,
+                       ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';<br />
+> SET session sql_mode="STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,
+                         ERROR_FOR_DIVISION_BY_ZERO,
+                         NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION";  </p>
+<p>> SET GLOBAL validate_password.policy=LOW;<br />
+> SET GLOBAL validate_password.mixed_case_count = 0;<br />
+> SET GLOBAL validate_password.number_count = 0;<br />
+> SET GLOBAL validate_password.check_user_name = 0;<br />
+> SET GLOBAL validate_password.special_char_count = 0;<br />
+> SET GLOBAL validate_password.LENGTH = 0;  </p>
+<p>ALTER TABLE table_name<br />
+ >  DROP COLUMN column_name;  </p>
+<h5 id="modify-database-in-conf-file">Modify database in conf file:</h5>
+<p>[mysqld]</p>
+<p>validate_password.length=0
+validate_password.mixed_case_count=0
+validate_password.number_count=0
+validate_password.policy=LOW
+validate_password.special_char_count=0
+default-storage-engine=INNODB</p>
+<p>innodb_log_file_size=2GB
+max_allowed_packet=256M
+binlog_format=row
+character-set-server=utf8
+collation-server=utf8_bin</p>
+<p>sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION</p>
+<p>==============================================================   </p>
+<p>Free the memory from caches first level:<br />
+# sync; echo 1 &gt; /proc/sys/vm/drop_caches</p>
+<p>==============================================================  </p>
+<h2 id="app">App:</h2>
+<p>1- Add work directory (Home directory) to the installation directory:  <br />
+# nano -w  atlassian-confluence-7.11.1/confluence/WEB-INF/classes/confluence-init.properties
+confluence.home=/home/confluence/confluence-7.10.2.1<br />
+2- copy the database connector:<br />
+# cp confluence/confluence/WEB-INF/lib/mysql-connector-java-5.1.47.jar atlassian-confluence-7.11.1/confluence/WEB-INF/lib/<br />
+3- copy the sever conf file:<br />
+# cp confluence/conf/server.xml atlassian-confluence-7.11.1/conf/  </p>
+<p>Note: jdbc:mysql://localhost:3306/db?allowPublicKeyRetrieval=true&amp;useSSL=false  </p>
+<p>4- unlink confluence and link new confluence:  </p>
+<p># ln -s atlassian-confluence-7.11.1 confluence  </p>
+<p>4- 
+sudo rm -r logs/<em>
+sudo rm -r temp/</em>
+sudo rm -r plugins-cache/<em>
+sudo rm -r plugins-osgi-cache/</em>
+sudo rm -r plugins-temp/*</p>
+<p>6-</p>
+<p>CATALINA_OPTS="-Xms1024m -Xmx6000m -XX:+UseG1GC ${CATALINA_OPTS}"
+JRE_HOME="/opt/jre11"</p>
+<p>7-
+chown -R confluence:confluence atlassian-confluence-7.11.1
+chown -R confluence:confluence /home/confluence/confluence-7.11.1/</p>
+<h6 id="_1"></h6>
+<p>jar -xf confluence-7.11.1.jar
+and change</p>
+<p>nano -w databaseSubsystemContext.xml</p>
+<p>DESCRIBE [table name];</p>
+<p>DENORMALISED_SPACE_VIEW_PERMISSIONS
+DENORMALISED_SPACE_EDIT_PERMISSIONS
+DENORMALISED_SID</p>
+<p>DROP table MIG_EXCLUDE_APP;
+           MIG_APP_ACCESS_SCOPE;</p>
+<p>SELECT max(lastmoddate) FROM ATTACHMENTS;
+select TITLE, LASTMODIFIER, LASTMODDATE, USERNAME from CONTENT group by TITLE;
+ select * from CONTENT LIMIT 1;</p>
+<p>SELECT email_address AS "email", user_name AS "username", display_name AS "displayname", active AS "active" FROM cwd_user;</p>
+<h6 id="_2"></h6>
+<p>Configuration:</p>
+<p>1- JAVA 8 ELLER JAVA 11
+1- JAVA eller JRE
+2- MYSQL ELLER MARIADB
+3- MYSQL 5.7 eller 8.0.23
+4- mysql-connector-java-8.0.23.jar (saknar datetimelocal )eller äldre 5.1.47
+5- xmx=6000
+6- Attachments folder in HOME_dir </p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../add-secondarey-dns-server/" class="btn btn-neutral" title="Add-secondary-dns-server"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../add-secondarey-dns-server/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
