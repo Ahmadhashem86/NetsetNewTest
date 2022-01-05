@@ -2,6 +2,7 @@ site_name: Netset-Docs
 site_url: https://devzone2.netset.com/
 nav:
     - Add-secondary-dns-server: add-secondarey-dns-server.md
+    - newfile: newfile.md
     - Confluence Setup: Confluence.md
 #theme: readthedocs
 theme:
